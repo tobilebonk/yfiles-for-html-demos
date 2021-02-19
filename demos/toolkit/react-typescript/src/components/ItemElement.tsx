@@ -26,7 +26,7 @@
  ** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **
  ***************************************************************************/
-import React, { Component } from 'react'
+import React, { useEffect, useState } from 'react'
 import { EdgeData, NodeData } from '../App'
 
 interface ItemElementProps {
@@ -37,28 +37,22 @@ interface ItemElementState {
   backgroundColor: string
 }
 
-export default class ItemElement extends Component<ItemElementProps, ItemElementState> {
-  constructor(props: ItemElementProps) {
-    super(props)
-    this.state = { backgroundColor: '#00d7ff' }
-  }
+const ItemElement: React.FunctionComponent<ItemElementProps> = (props: ItemElementProps) => {
+  const [state, setState] = useState<ItemElementState>({ backgroundColor: '#00d7ff' });
+  useEffect(() => {
+    setState({ backgroundColor: 'transparent' });
+  },[])
 
-  componentDidMount(): void {
-    this.setState(() => ({ backgroundColor: 'transparent' }))
+  const codeStyle = {
+    margin: 0
   }
-
-  render(): JSX.Element {
-    const style = {
-      backgroundColor: this.state.backgroundColor,
+  return (
+    <div style={{
+      backgroundColor: state.backgroundColor,
       transition: 'background-color 1s ease-out'
-    }
-    const codeStyle = {
-      margin: 0
-    }
-    return (
-      <div style={style}>
-        <pre style={codeStyle}>{JSON.stringify(this.props.item)}</pre>
-      </div>
-    )
-  }
+    }}>
+      <pre style={codeStyle}>{JSON.stringify(props.item)}</pre>
+    </div>
+  )
 }
+export default ItemElement;
