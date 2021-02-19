@@ -26,7 +26,7 @@
  ** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **
  ***************************************************************************/
-import React, { Component } from 'react'
+import React from 'react'
 
 interface ItemElementProps {
   width: number
@@ -34,27 +34,26 @@ interface ItemElementProps {
   tag: { name?: string }
 }
 
-export default class NodeTemplate extends Component<ItemElementProps> {
-  render(): JSX.Element {
-    return (
-      <g>
-        <rect
-          style={{ fill: '#00d7ff' }}
-          x={0}
-          y={0}
-          rx={10}
-          ry={10}
-          width={this.props.width}
-          height={this.props.height}
-        />
-        <text
-          x={this.props.width / 2}
-          y={this.props.height / 2}
-          style={{ fill: '#ffffff', textAnchor: 'middle', dominantBaseline: 'middle' }}
-        >
-          {this.props.tag!.name}
-        </text>
-      </g>
-    )
-  }
+const NodeTemplate: React.FunctionComponent<ItemElementProps> = (props: ItemElementProps) => {
+  return (
+    <g>
+      <rect
+        style={{ fill: '#00d7ff' }}
+        x={0}
+        y={0}
+        rx={10}
+        ry={10}
+        width={props.width}
+        height={props.height}
+      />
+      <text
+        x={props.width / 2}
+        y={props.height / 2}
+        style={{ fill: '#ffffff', textAnchor: 'middle', dominantBaseline: 'middle' }}
+      >
+        {props.tag!.name}
+      </text>
+    </g>
+  )
 }
+export default NodeTemplate;
