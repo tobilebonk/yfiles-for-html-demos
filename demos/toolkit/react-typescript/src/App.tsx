@@ -26,7 +26,7 @@
  ** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **
  ***************************************************************************/
-import React, { Component, useState } from 'react'
+import React, { useState } from 'react'
 import './App.css'
 import ReactGraphComponent from './components/ReactGraphComponent'
 import DemoDescription from './components/DemoDescription'
