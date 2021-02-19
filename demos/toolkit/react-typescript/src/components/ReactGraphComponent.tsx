@@ -57,6 +57,7 @@ import yFilesLicense from '../license.json'
 import { EdgeData, GraphData, NodeData } from '../App'
 import { ReactComponentNodeStyle } from './ReactComponentNodeStyle'
 import NodeTemplate from './NodeTemplate'
+import GraphComponentWrapper from './GraphComponentWrapper'
 
 interface ReactGraphComponentProps {
   graphData: GraphData
@@ -64,7 +65,6 @@ interface ReactGraphComponentProps {
 }
 
 export default class ReactGraphComponent extends Component<ReactGraphComponentProps> {
-  private readonly div: React.RefObject<HTMLDivElement>
   private updating: boolean
   private isDirty: boolean
   private scheduledUpdate: null | number
@@ -83,7 +83,6 @@ export default class ReactGraphComponent extends Component<ReactGraphComponentPr
 
   constructor(props: ReactGraphComponentProps) {
     super(props)
-    this.div = React.createRef<HTMLDivElement>()
 
     // Newly created elements are animated during which the graph data should not be modified
     this.updating = false
@@ -103,8 +102,6 @@ export default class ReactGraphComponent extends Component<ReactGraphComponentPr
   }
 
   async componentDidMount(): Promise<void> {
-    // Append the GraphComponent to the DOM
-    this.div.current!.appendChild(this.graphComponent.div)
 
     // Build the graph from the given data...
     this.updating = true
@@ -170,6 +167,7 @@ export default class ReactGraphComponent extends Component<ReactGraphComponentPr
       }
     )
   }
+
 
   /**
    * Creates and configures the {@link GraphBuilder}.
@@ -249,7 +247,7 @@ export default class ReactGraphComponent extends Component<ReactGraphComponentPr
             fitContent={(): void => ICommand.FIT_GRAPH_BOUNDS.execute(null, this.graphComponent)}
           />
         </div>
-        <div className="graph-component-container" ref={this.div} />
+        <GraphComponentWrapper graphComponent={this.graphComponent} />
       </div>
     )
   }
