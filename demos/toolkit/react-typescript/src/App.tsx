@@ -26,7 +26,7 @@
  ** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **
  ***************************************************************************/
-import React, { Component } from 'react'
+import React, { Component, useState } from 'react'
 import './App.css'
 import ReactGraphComponent from './components/ReactGraphComponent'
 import DemoDescription from './components/DemoDescription'
@@ -52,46 +52,44 @@ export interface AppState {
   graphData: GraphData
 }
 
-export default class App extends Component<{}, AppState> {
-  readonly state: AppState
+export interface Props {}
 
-  constructor(props: object) {
-    super(props)
-    this.state = {
-      graphData: {
-        nodesSource: [
-          {
-            id: 0,
-            name: 'Node 0'
-          },
-          {
-            id: 1,
-            name: 'Node 1'
-          },
-          {
-            id: 2,
-            name: 'Node 2'
-          }
-        ],
-        edgesSource: [
-          {
-            fromNode: 0,
-            toNode: 1
-          },
-          {
-            fromNode: 0,
-            toNode: 2
-          }
-        ]
+const initialAppState: AppState = {
+  graphData: {
+    nodesSource: [
+      {
+        id: 0,
+        name: 'Node 0'
+      },
+      {
+        id: 1,
+        name: 'Node 1'
+      },
+      {
+        id: 2,
+        name: 'Node 2'
       }
-    }
+    ],
+    edgesSource: [
+      {
+        fromNode: 0,
+        toNode: 1
+      },
+      {
+        fromNode: 0,
+        toNode: 2
+      }
+    ]
   }
+};
 
-  addNode(): void {
-    const newIdx =
-      this.state.graphData.nodesSource.reduce((maxId, item) => Math.max(maxId, item.id), 0) + 1
-    const parentNodeIdx = Math.floor(Math.random() * this.state.graphData.nodesSource.length)
-    this.setState(state => {
+const App: React.FunctionComponent<Props> = (props : Props) => {
+  const [state, setState] = useState<AppState>(initialAppState);
+
+  const addNode = () => {
+    const newIdx = state.graphData.nodesSource.reduce((maxId, item) => Math.max(maxId, item.id), 0) + 1
+    const parentNodeIdx = Math.floor(Math.random() * state.graphData.nodesSource.length)
+    setState(state => {
       const nodesSource = state.graphData.nodesSource.concat({
         id: newIdx,
         name: `Node ${newIdx}`
@@ -115,13 +113,13 @@ export default class App extends Component<{}, AppState> {
     })
   }
 
-  removeNode(): void {
-    this.setState(state => {
-      const randomNodeIdx = Math.floor(Math.random() * this.state.graphData.nodesSource.length)
+  const removeNode = () => {
+    setState(state => {
+      const randomNodeIdx = Math.floor(Math.random() * state.graphData.nodesSource.length)
       const newNodesSource = [...state.graphData.nodesSource]
       newNodesSource.splice(randomNodeIdx, 1)
 
-      const nodeId = this.state.graphData.nodesSource[randomNodeIdx].id
+      const nodeId = state.graphData.nodesSource[randomNodeIdx].id
       const newEdgesSource = state.graphData.edgesSource.filter(
         edge => edge.fromNode !== nodeId && edge.toNode !== nodeId
       )
@@ -134,8 +132,8 @@ export default class App extends Component<{}, AppState> {
     })
   }
 
-  resetData(): void {
-    this.setState({
+  const resetData = () => {
+    setState({
       graphData: {
         nodesSource: [
           {
@@ -165,37 +163,38 @@ export default class App extends Component<{}, AppState> {
     })
   }
 
-  render(): JSX.Element {
-    return (
-      <div className="App">
-        <aside className="demo-sidebar left">
-          <DemoDescription />
-        </aside>
-        <aside className="demo-sidebar right">
-          <DemoDataPanel
-            graphData={this.state.graphData}
-            onAddNode={(): void => this.addNode()}
-            onRemoveNode={(): void => this.removeNode()}
-          />
-        </aside>
 
-        <div className="demo-content">
-          <div className="demo-header">
-            <a href="https://www.yworks.com" target="_blank" rel="noopener noreferrer">
-              <img src={yLogo} className="demo-y-logo" alt="yWorks Logo" />
-            </a>
-            <a href="../../../README.html" target="_blank">
-              yFiles for HTML
-            </a>
-            <span className="demo-title">React Demo [yFiles for HTML]</span>
-          </div>
+  return (
+    <div className="App">
+      <aside className="demo-sidebar left">
+        <DemoDescription />
+      </aside>
+      <aside className="demo-sidebar right">
+        <DemoDataPanel
+          graphData={state.graphData}
+          onAddNode={(): void => addNode()}
+          onRemoveNode={(): void => removeNode()}
+        />
+      </aside>
 
-          <ReactGraphComponent
-            graphData={this.state.graphData}
-            onResetData={(): void => this.resetData()}
-          />
+      <div className="demo-content">
+        <div className="demo-header">
+          <a href="https://www.yworks.com" target="_blank" rel="noopener noreferrer">
+            <img src={yLogo} className="demo-y-logo" alt="yWorks Logo" />
+          </a>
+          <a href="../../../README.html" target="_blank">
+            yFiles for HTML
+            </a>
+          <span className="demo-title">React Demo [yFiles for HTML]</span>
         </div>
+
+        <ReactGraphComponent
+          graphData={state.graphData}
+          onResetData={(): void => resetData()}
+        />
       </div>
-    )
-  }
+    </div>
+  )
 }
+
+export default App;
