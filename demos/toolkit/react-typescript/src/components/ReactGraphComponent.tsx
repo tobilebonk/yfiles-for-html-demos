@@ -31,18 +31,13 @@ import ReactDOM from 'react-dom'
 import {
   Arrow,
   DefaultLabelStyle,
-  EdgesSource,
   Font,
-  GraphBuilder,
   GraphComponent,
   GraphViewerInputMode,
-  HierarchicLayout,
   ICommand,
   IModelItem,
-  LayoutExecutor,
   License,
   MouseHoverInputMode,
-  NodesSource,
   Point,
   PolylineEdgeStyle,
   QueryItemToolTipEventArgs,
@@ -54,10 +49,10 @@ import './ReactGraphComponent.css'
 import ItemElement from './ItemElement'
 import DemoToolbar from './DemoToolbar'
 import yFilesLicense from '../license.json'
-import { EdgeData, GraphData, NodeData } from '../App'
+import { GraphData } from '../App'
 import { ReactComponentNodeStyle } from './ReactComponentNodeStyle'
 import NodeTemplate from './NodeTemplate'
-import GraphComponentWrapper from './GraphComponentWrapper'
+import GraphComponentWrapper from './ReactGraphComponentRenderer'
 
 interface ReactGraphComponentProps {
   graphData: GraphData
@@ -65,11 +60,7 @@ interface ReactGraphComponentProps {
 }
 
 export default class ReactGraphComponent extends Component<ReactGraphComponentProps> {
-  private updating: boolean
-  private isDirty: boolean
-  private scheduledUpdate: null | number
   private readonly graphComponent: GraphComponent
-  private graphBuilder?: GraphBuilder
 
   static defaultProps = {
     graphData: {
@@ -78,18 +69,8 @@ export default class ReactGraphComponent extends Component<ReactGraphComponentPr
     }
   }
 
-  private nodesSource: NodesSource<NodeData> | null
-  private edgesSource: EdgesSource<EdgeData> | null
-
   constructor(props: ReactGraphComponentProps) {
     super(props)
-
-    // Newly created elements are animated during which the graph data should not be modified
-    this.updating = false
-    this.isDirty = false
-    this.scheduledUpdate = null
-    this.nodesSource = null
-    this.edgesSource = null
 
     // include the yFiles License
     License.value = yFilesLicense
@@ -99,20 +80,6 @@ export default class ReactGraphComponent extends Component<ReactGraphComponentPr
     this.graphComponent.inputMode = new GraphViewerInputMode()
     this.initializeTooltips(this.graphComponent.inputMode as GraphViewerInputMode)
     this.initializeDefaultStyles()
-  }
-
-  async componentDidMount(): Promise<void> {
-
-    // Build the graph from the given data...
-    this.updating = true
-    this.graphBuilder = this.createGraphBuilder()
-    this.graphComponent.graph = this.graphBuilder.buildGraph()
-    // ... and make sure it is centered in the view (this is the initial state of the layout animation)
-    this.graphComponent.fitGraphBounds()
-
-    // Layout the graph with the hierarchic layout style
-    await this.graphComponent.morphLayout(new HierarchicLayout(), '1s')
-    this.updating = false
   }
 
   /**
@@ -168,73 +135,6 @@ export default class ReactGraphComponent extends Component<ReactGraphComponentPr
     )
   }
 
-
-  /**
-   * Creates and configures the {@link GraphBuilder}.
-   * @return {GraphBuilder}
-   */
-  createGraphBuilder(): GraphBuilder {
-    const graphBuilder = new GraphBuilder(this.graphComponent.graph)
-    this.nodesSource = graphBuilder.createNodesSource({
-      // Stores the nodes of the graph
-      data: this.props.graphData.nodesSource,
-      // Identifies the id property of a node object
-      id: 'id',
-      // Use the 'name' property as node label
-      tag: item => ({ name: item.name })
-    })
-    this.edgesSource = graphBuilder.createEdgesSource({
-      // Stores the edges of the graph
-      data: this.props.graphData.edgesSource,
-      // Identifies the property of an edge object that contains the source node's id
-      sourceId: 'fromNode',
-      // Identifies the property of an edge object that contains the target node's id
-      targetId: 'toNode'
-    })
-    return graphBuilder
-  }
-
-  /**
-   * When the React lifecycle tells us that properties might have changed,
-   * we compare the property states and set the corresponding properties
-   * of the GraphComponent instance
-   */
-  componentDidUpdate(prevProps: ReactGraphComponentProps): void {
-    if (
-      this.props.graphData.nodesSource.length !== prevProps.graphData.nodesSource.length ||
-      this.props.graphData.edgesSource.length !== prevProps.graphData.edgesSource.length
-    ) {
-      this.updateGraph().catch(e => alert(e))
-    }
-  }
-
-  /**
-   * Updates the graph based on the current graphData and applies a layout afterwards.
-   * @return {Promise}
-   */
-  async updateGraph(): Promise<void> {
-    this.isDirty = true
-    if (this.updating) {
-      return
-    }
-    while (this.isDirty) {
-      this.updating = true
-      // update the graph based on the given graph data
-      this.graphBuilder!.setData(this.nodesSource!, this.props.graphData.nodesSource)
-      this.graphBuilder!.setData(this.edgesSource!, this.props.graphData.edgesSource)
-      this.graphBuilder!.updateGraph()
-      this.isDirty = false
-
-      // apply a layout to re-arrange the new elements
-      const layoutExecutor = new LayoutExecutor(this.graphComponent, new HierarchicLayout())
-      layoutExecutor.duration = TimeSpan.fromSeconds(1)
-      layoutExecutor.easedAnimation = true
-      layoutExecutor.animateViewport = true
-      await layoutExecutor.start()
-      this.updating = false
-    }
-  }
-
   render(): JSX.Element {
     return (
       <div>
@@ -247,7 +147,7 @@ export default class ReactGraphComponent extends Component<ReactGraphComponentPr
             fitContent={(): void => ICommand.FIT_GRAPH_BOUNDS.execute(null, this.graphComponent)}
           />
         </div>
-        <GraphComponentWrapper graphComponent={this.graphComponent} />
+        <GraphComponentWrapper graphComponent={this.graphComponent} graphData={this.props.graphData} />
       </div>
     )
   }
