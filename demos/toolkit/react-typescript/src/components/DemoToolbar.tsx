@@ -26,7 +26,7 @@
  ** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **
  ***************************************************************************/
-import React, { Component } from 'react'
+import React from 'react'
 import './DemoToolbar.css'
 
 interface DemoToolbarProps {
@@ -37,29 +37,29 @@ interface DemoToolbarProps {
   zoomOut(): void
 }
 
-export default class DemoToolbar extends Component<DemoToolbarProps> {
-  render(): JSX.Element {
-    return (
-      <div className="demo-toolbar">
-        <button
-          className="demo-icon-yIconReload"
-          title="Reset Data"
-          onClick={this.props.resetData}
-        />
-        <span className="demo-separator" />
-        <button className="demo-icon-yIconZoomIn" title="Zoom In" onClick={this.props.zoomIn} />
-        <button
-          className="demo-icon-yIconZoomOriginal"
-          title="Reset Zoom"
-          onClick={this.props.resetZoom}
-        />
-        <button className="demo-icon-yIconZoomOut" title="Zoom Out" onClick={this.props.zoomOut} />
-        <button
-          className="demo-icon-yIconZoomFit"
-          title="Fit Diagram"
-          onClick={this.props.fitContent}
-        />
-      </div>
-    )
-  }
+const DemoToolbar: React.FunctionComponent<DemoToolbarProps> = (props: DemoToolbarProps) => {
+  return (
+    <div className="demo-toolbar">
+      <button
+        className="demo-icon-yIconReload"
+        title="Reset Data"
+        onClick={props.resetData}
+      />
+      <span className="demo-separator" />
+      <button className="demo-icon-yIconZoomIn" title="Zoom In" onClick={props.zoomIn} />
+      <button
+        className="demo-icon-yIconZoomOriginal"
+        title="Reset Zoom"
+        onClick={props.resetZoom}
+      />
+      <button className="demo-icon-yIconZoomOut" title="Zoom Out" onClick={props.zoomOut} />
+      <button
+        className="demo-icon-yIconZoomFit"
+        title="Fit Diagram"
+        onClick={props.fitContent}
+      />
+    </div>
+  )
+
 }
+export default DemoToolbar;
