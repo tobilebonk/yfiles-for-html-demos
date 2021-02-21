@@ -26,7 +26,7 @@
  ** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **
  ***************************************************************************/
-import React, { Component } from 'react'
+import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 import {
   Arrow,
@@ -59,96 +59,87 @@ interface ReactGraphComponentProps {
   onResetData(): void
 }
 
-export default class ReactGraphComponent extends Component<ReactGraphComponentProps> {
-  private readonly graphComponent: GraphComponent
+const initGraphComponent = (): GraphComponent => {
+/**
+ * Set ups the tooltips for nodes and edges.
+ * @param {GraphViewerInputMode} inputMode
+ */
 
-  static defaultProps = {
-    graphData: {
-      nodesSource: [],
-      edgesSource: []
-    }
-  }
+const initializeTooltips = (inputMode: GraphViewerInputMode): void => {
+  // Customize the tooltip's behavior to our liking.
+  const mouseHoverInputMode = inputMode.mouseHoverInputMode
+  mouseHoverInputMode.toolTipLocationOffset = new Point(15, 15)
+  mouseHoverInputMode.delay = TimeSpan.fromSeconds(0.5)
+  mouseHoverInputMode.duration = TimeSpan.fromSeconds(5)
 
-  constructor(props: ReactGraphComponentProps) {
-    super(props)
-
-    // include the yFiles License
-    License.value = yFilesLicense
-
-    // Initialize the GraphComponent
-    this.graphComponent = new GraphComponent()
-    this.graphComponent.inputMode = new GraphViewerInputMode()
-    this.initializeTooltips(this.graphComponent.inputMode as GraphViewerInputMode)
-    this.initializeDefaultStyles()
-  }
-
-  /**
-   * Sets default styles for the graph.
-   */
-  initializeDefaultStyles(): void {
-    this.graphComponent.graph.nodeDefaults.size = new Size(60, 40)
-    this.graphComponent.graph.nodeDefaults.style = new ReactComponentNodeStyle<{ name?: string }>(
-      NodeTemplate
-    )
-    this.graphComponent.graph.nodeDefaults.labels.style = new DefaultLabelStyle({
-      textFill: '#fff',
-      font: new Font('Robot, sans-serif', 14)
-    })
-    this.graphComponent.graph.edgeDefaults.style = new PolylineEdgeStyle({
-      smoothingLength: 25,
-      stroke: '5px #242265',
-      targetArrow: new Arrow({
-        fill: '#242265',
-        scale: 2,
-        type: 'circle'
-      })
-    })
-  }
-
-  /**
-   * Set ups the tooltips for nodes and edges.
-   * @param {GraphViewerInputMode} inputMode
-   */
-  initializeTooltips(inputMode: GraphViewerInputMode): void {
-    // Customize the tooltip's behavior to our liking.
-    const mouseHoverInputMode = inputMode.mouseHoverInputMode
-    mouseHoverInputMode.toolTipLocationOffset = new Point(15, 15)
-    mouseHoverInputMode.delay = TimeSpan.fromSeconds(0.5)
-    mouseHoverInputMode.duration = TimeSpan.fromSeconds(5)
-
-    // Register a listener for when a tooltip should be shown.
-    inputMode.addQueryItemToolTipListener(
-      (src: MouseHoverInputMode, args: QueryItemToolTipEventArgs<IModelItem>) => {
-        if (args.handled) {
-          // Tooltip content has already been assigned => nothing to do.
-          return
-        }
-
-        // Re-use the React-Component to render the tooltip content
-        const container = document.createElement('div')
-        ReactDOM.render(<ItemElement item={args.item!.tag} />, container)
-        args.toolTip = container
-
-        // Indicate that the tooltip content has been set.
-        args.handled = true
+  // Register a listener for when a tooltip should be shown.
+  inputMode.addQueryItemToolTipListener(
+    (src: MouseHoverInputMode, args: QueryItemToolTipEventArgs<IModelItem>) => {
+      if (args.handled) {
+        // Tooltip content has already been assigned => nothing to do.
+        return
       }
-    )
-  }
 
-  render(): JSX.Element {
-    return (
-      <div>
-        <div className="toolbar">
-          <DemoToolbar
-            resetData={this.props.onResetData}
-            zoomIn={(): void => ICommand.INCREASE_ZOOM.execute(null, this.graphComponent)}
-            zoomOut={(): void => ICommand.DECREASE_ZOOM.execute(null, this.graphComponent)}
-            resetZoom={(): void => ICommand.ZOOM.execute(1.0, this.graphComponent)}
-            fitContent={(): void => ICommand.FIT_GRAPH_BOUNDS.execute(null, this.graphComponent)}
-          />
-        </div>
-        <GraphComponentWrapper graphComponent={this.graphComponent} graphData={this.props.graphData} />
-      </div>
-    )
-  }
+      // Re-use the React-Component to render the tooltip content
+      const container = document.createElement('div')
+      ReactDOM.render(<ItemElement item={args.item!.tag} />, container)
+      args.toolTip = container
+
+      // Indicate that the tooltip content has been set.
+      args.handled = true
+    }
+  )
 }
+/**
+ * Sets default styles for the graph.
+ */
+const initializeDefaultStyles = (graphComponent: GraphComponent): void => {
+  graphComponent.graph.nodeDefaults.size = new Size(60, 40)
+  graphComponent.graph.nodeDefaults.style = new ReactComponentNodeStyle<{ name?: string }>(
+    NodeTemplate
+  )
+  graphComponent.graph.nodeDefaults.labels.style = new DefaultLabelStyle({
+    textFill: '#fff',
+    font: new Font('Robot, sans-serif', 14)
+  })
+  graphComponent.graph.edgeDefaults.style = new PolylineEdgeStyle({
+    smoothingLength: 25,
+    stroke: '5px #242265',
+    targetArrow: new Arrow({
+      fill: '#242265',
+      scale: 2,
+      type: 'circle'
+    })
+  })
+}
+
+  // include the yFiles License
+  License.value = yFilesLicense
+  const graphComponent: GraphComponent = new GraphComponent();
+  graphComponent.inputMode = new GraphViewerInputMode();
+  initializeTooltips(graphComponent.inputMode as GraphViewerInputMode);
+  initializeDefaultStyles(graphComponent);
+  return graphComponent;
+}
+
+
+const ReactGraphComponent: React.FunctionComponent<ReactGraphComponentProps> = (props: ReactGraphComponentProps) => {
+  const [graphComponent] = useState<GraphComponent>(() => initGraphComponent());
+
+  return (
+    <div>
+      <div className="toolbar">
+        <DemoToolbar
+          resetData={props.onResetData}
+          zoomIn={(): void => ICommand.INCREASE_ZOOM.execute(null, graphComponent)}
+          zoomOut={(): void => ICommand.DECREASE_ZOOM.execute(null, graphComponent)}
+          resetZoom={(): void => ICommand.ZOOM.execute(1.0, graphComponent)}
+          fitContent={(): void => ICommand.FIT_GRAPH_BOUNDS.execute(null, graphComponent)}
+        />
+      </div>
+      <GraphComponentWrapper graphComponent={graphComponent} graphData={props.graphData} />
+    </div>
+  )
+}
+
+export default ReactGraphComponent;
