@@ -36,7 +36,6 @@ import {
   GraphViewerInputMode,
   ICommand,
   IModelItem,
-  License,
   MouseHoverInputMode,
   Point,
   PolylineEdgeStyle,
@@ -48,11 +47,11 @@ import 'yfiles/yfiles.css'
 import './ReactGraphComponent.css'
 import ItemElement from './ItemElement'
 import DemoToolbar from './DemoToolbar'
-import yFilesLicense from '../license.json'
 import { GraphData } from '../App'
 import { ReactComponentNodeStyle } from './ReactComponentNodeStyle'
 import NodeTemplate from './NodeTemplate'
 import GraphComponentWrapper from './ReactGraphComponentRenderer'
+import useLicense from '../hooks/useLicense'
 
 interface ReactGraphComponentProps {
   graphData: GraphData
@@ -60,61 +59,59 @@ interface ReactGraphComponentProps {
 }
 
 const initGraphComponent = (): GraphComponent => {
-/**
- * Set ups the tooltips for nodes and edges.
- * @param {GraphViewerInputMode} inputMode
- */
+  /**
+   * Set ups the tooltips for nodes and edges.
+   * @param {GraphViewerInputMode} inputMode
+   */
 
-const initializeTooltips = (inputMode: GraphViewerInputMode): void => {
-  // Customize the tooltip's behavior to our liking.
-  const mouseHoverInputMode = inputMode.mouseHoverInputMode
-  mouseHoverInputMode.toolTipLocationOffset = new Point(15, 15)
-  mouseHoverInputMode.delay = TimeSpan.fromSeconds(0.5)
-  mouseHoverInputMode.duration = TimeSpan.fromSeconds(5)
+  const initializeTooltips = (inputMode: GraphViewerInputMode): void => {
+    // Customize the tooltip's behavior to our liking.
+    const mouseHoverInputMode = inputMode.mouseHoverInputMode
+    mouseHoverInputMode.toolTipLocationOffset = new Point(15, 15)
+    mouseHoverInputMode.delay = TimeSpan.fromSeconds(0.5)
+    mouseHoverInputMode.duration = TimeSpan.fromSeconds(5)
 
-  // Register a listener for when a tooltip should be shown.
-  inputMode.addQueryItemToolTipListener(
-    (src: MouseHoverInputMode, args: QueryItemToolTipEventArgs<IModelItem>) => {
-      if (args.handled) {
-        // Tooltip content has already been assigned => nothing to do.
-        return
+    // Register a listener for when a tooltip should be shown.
+    inputMode.addQueryItemToolTipListener(
+      (src: MouseHoverInputMode, args: QueryItemToolTipEventArgs<IModelItem>) => {
+        if (args.handled) {
+          // Tooltip content has already been assigned => nothing to do.
+          return
+        }
+
+        // Re-use the React-Component to render the tooltip content
+        const container = document.createElement('div')
+        ReactDOM.render(<ItemElement item={args.item!.tag} />, container)
+        args.toolTip = container
+
+        // Indicate that the tooltip content has been set.
+        args.handled = true
       }
-
-      // Re-use the React-Component to render the tooltip content
-      const container = document.createElement('div')
-      ReactDOM.render(<ItemElement item={args.item!.tag} />, container)
-      args.toolTip = container
-
-      // Indicate that the tooltip content has been set.
-      args.handled = true
-    }
-  )
-}
-/**
- * Sets default styles for the graph.
- */
-const initializeDefaultStyles = (graphComponent: GraphComponent): void => {
-  graphComponent.graph.nodeDefaults.size = new Size(60, 40)
-  graphComponent.graph.nodeDefaults.style = new ReactComponentNodeStyle<{ name?: string }>(
-    NodeTemplate
-  )
-  graphComponent.graph.nodeDefaults.labels.style = new DefaultLabelStyle({
-    textFill: '#fff',
-    font: new Font('Robot, sans-serif', 14)
-  })
-  graphComponent.graph.edgeDefaults.style = new PolylineEdgeStyle({
-    smoothingLength: 25,
-    stroke: '5px #242265',
-    targetArrow: new Arrow({
-      fill: '#242265',
-      scale: 2,
-      type: 'circle'
+    )
+  }
+  /**
+   * Sets default styles for the graph.
+   */
+  const initializeDefaultStyles = (graphComponent: GraphComponent): void => {
+    graphComponent.graph.nodeDefaults.size = new Size(60, 40)
+    graphComponent.graph.nodeDefaults.style = new ReactComponentNodeStyle<{ name?: string }>(
+      NodeTemplate
+    )
+    graphComponent.graph.nodeDefaults.labels.style = new DefaultLabelStyle({
+      textFill: '#fff',
+      font: new Font('Robot, sans-serif', 14)
     })
-  })
-}
+    graphComponent.graph.edgeDefaults.style = new PolylineEdgeStyle({
+      smoothingLength: 25,
+      stroke: '5px #242265',
+      targetArrow: new Arrow({
+        fill: '#242265',
+        scale: 2,
+        type: 'circle'
+      })
+    })
+  }
 
-  // include the yFiles License
-  License.value = yFilesLicense
   const graphComponent: GraphComponent = new GraphComponent();
   graphComponent.inputMode = new GraphViewerInputMode();
   initializeTooltips(graphComponent.inputMode as GraphViewerInputMode);
@@ -124,6 +121,9 @@ const initializeDefaultStyles = (graphComponent: GraphComponent): void => {
 
 
 const ReactGraphComponent: React.FunctionComponent<ReactGraphComponentProps> = (props: ReactGraphComponentProps) => {
+  // include the yFiles License (before graph creation)
+  useLicense();
+  // initialize read-only graph component
   const [graphComponent] = useState<GraphComponent>(() => initGraphComponent());
 
   return (
