@@ -26,7 +26,7 @@
  ** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **
  ***************************************************************************/
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { EdgesSource, GraphBuilder, GraphComponent, HierarchicLayout, LayoutExecutor, NodesSource, TimeSpan } from 'yfiles';
 import { EdgeData, GraphData, NodeData } from '../App';
 
@@ -72,41 +72,29 @@ const createGraphBuilder = (graphComponent: GraphComponent, graphData: GraphData
  * @param graphData the update (the latest change to edges and nodes)
  */
 const useUpdateGraph = (graphComponent: GraphComponent, graphBuilderWithSources: GraphBuilderWithSources, graphData: GraphData): void => {
-    const [updating, setUpdating] = useState(false);
-    const [animationRunning, setAnimationRunning] = useState(false);
-    const updateAndAnimate = useCallback(async (newGraphData: GraphData) => {
-        if (updating) {
-            return
-        }
+
+    const updateAndAnimate = async (newGraphData: GraphData) => {
         // update the graph data
         graphBuilderWithSources.builder.setData(graphBuilderWithSources.nodesSource, newGraphData.nodesSource)
         graphBuilderWithSources.builder.setData(graphBuilderWithSources.edgesSource, newGraphData.edgesSource)
 
-        // "wait" for the the previous change's animation to be finished
-        while (!animationRunning) {
-            // updat the graph data
-            graphBuilderWithSources.builder.updateGraph()
-            // apply a layout to re-arrange the new elements
-            setAnimationRunning(true);
-            const layoutExecutor = new LayoutExecutor(graphComponent, new HierarchicLayout())
-            layoutExecutor.duration = TimeSpan.fromSeconds(1)
-            layoutExecutor.easedAnimation = true
-            layoutExecutor.animateViewport = true
-            await layoutExecutor.start()
-            setUpdating(false);
+        graphBuilderWithSources.builder.updateGraph()
+        // apply a layout to re-arrange the new elements
+        const layoutExecutor = new LayoutExecutor(graphComponent, new HierarchicLayout())
+        layoutExecutor.duration = TimeSpan.fromSeconds(1)
+        layoutExecutor.easedAnimation = true
+        layoutExecutor.animateViewport = true
+        await layoutExecutor.start()
 
-            // finally, make sure that the graph is centered
-            graphComponent.fitGraphBounds();
-            setAnimationRunning(false);
-        }
-    },
-    // only re-render this function, if the input parameter changes; ignore warnings for other dependencies
-    [graphData]);  // eslint-disable-line
+        // finally, make sure that the graph is centered
+        graphComponent.fitGraphBounds();
+    }
 
     useEffect(() => {
         // pass the data update to the update function
         updateAndAnimate(graphData).catch(e => alert(e))
-    }, [graphData, updateAndAnimate]);
+        // only re-render this function, if the input parameter changes; ignore warnings for other dependencies
+    }, [graphData]); // eslint-disable-line
 }
 
 interface ReactGraphComponentRendererProps {
@@ -126,7 +114,7 @@ const GraphComponentWrapper: React.FunctionComponent<ReactGraphComponentRenderer
         div.current!.appendChild(props.graphComponent.div);
     });
     // updateGraph on props change (== change on graphData)
-    useUpdateGraph(props.graphComponent, graphBuilderInUse,  props.graphData,);
+    useUpdateGraph(props.graphComponent, graphBuilderInUse, props.graphData,);
     // return the JSX
     return (
         <div className="graph-component-container" ref={div} />
